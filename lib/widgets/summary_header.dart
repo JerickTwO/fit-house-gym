@@ -8,6 +8,7 @@ class SummaryHeader extends StatelessWidget {
   final double totalEfectivo;
   final double totalTransferencia;
   final int activos;
+  final int porVencer;
   final int vencidos;
 
   const SummaryHeader({
@@ -15,6 +16,7 @@ class SummaryHeader extends StatelessWidget {
     required this.totalEfectivo,
     required this.totalTransferencia,
     required this.activos,
+    required this.porVencer,
     required this.vencidos,
   });
 
@@ -47,9 +49,18 @@ class SummaryHeader extends StatelessWidget {
         const SizedBox(height: 16),
         Row(
           children: [
-            _StatBox(label: 'Activos', value: activos, dotColor: AppColors.activo),
+            _StatBox(
+                label: 'Activos', value: activos, dotColor: AppColors.activo),
             const SizedBox(width: 10),
-            _StatBox(label: 'Vencidos', value: vencidos, dotColor: AppColors.vencido),
+            _StatBox(
+                label: 'Por vencer',
+                value: porVencer,
+                dotColor: AppColors.porVencer),
+            const SizedBox(width: 10),
+            _StatBox(
+                label: 'Vencidos',
+                value: vencidos,
+                dotColor: AppColors.vencido),
           ],
         ),
       ],
@@ -91,7 +102,8 @@ class _StatBox extends StatelessWidget {
                 Container(
                   width: 7,
                   height: 7,
-                  decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+                  decoration:
+                      BoxDecoration(color: dotColor, shape: BoxShape.circle),
                 ),
                 const SizedBox(width: 6),
                 Text(

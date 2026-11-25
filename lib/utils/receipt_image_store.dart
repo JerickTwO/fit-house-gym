@@ -16,9 +16,8 @@ class ReceiptImageStore {
       await receiptsDir.create(recursive: true);
     }
 
-    final extension = sourcePath.contains('.')
-        ? sourcePath.split('.').last
-        : 'jpg';
+    final extension =
+        sourcePath.contains('.') ? sourcePath.split('.').last : 'jpg';
     final fileName =
         'comprobante_${DateTime.now().millisecondsSinceEpoch}.$extension';
     final destination = File('${receiptsDir.path}/$fileName');

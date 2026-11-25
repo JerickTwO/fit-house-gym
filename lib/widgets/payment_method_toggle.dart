@@ -36,9 +36,8 @@ class PaymentMethodToggle extends StatelessWidget {
                 child: Text(
                   method.label,
                   style: TextStyle(
-                    color: isSelected
-                        ? AppColors.onAccent
-                        : AppColors.textPrimary,
+                    color:
+                        isSelected ? AppColors.onAccent : AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

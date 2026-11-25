@@ -17,9 +17,9 @@ Future<bool> openWhatsAppReminder({
 
   final message = status == ClientStatus.vencido
       ? 'Hola ${client.name}! 👋 Te escribimos del gimnasio: tu suscripción '
-            'venció el $formattedDate. Te esperamos para renovarla cuando puedas. 💪'
+          'venció el $formattedDate. Te esperamos para renovarla cuando puedas. 💪'
       : 'Hola ${client.name}! 👋 Te recordamos que tu suscripción del '
-            'gimnasio vence el $formattedDate. ¡No te quedes sin entrenar! 💪';
+          'gimnasio vence el $formattedDate. ¡No te quedes sin entrenar! 💪';
 
   final uri = Uri.parse(
     'https://wa.me/593$phone?text=${Uri.encodeComponent(message)}',

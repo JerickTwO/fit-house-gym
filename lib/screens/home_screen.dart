@@ -11,9 +11,11 @@ import '../widgets/add_client_sheet.dart';
 import '../widgets/client_card.dart';
 import '../widgets/renew_sheet.dart';
 import '../widgets/summary_header.dart';
+import 'client_detail_screen.dart';
+import 'payments_history_screen.dart';
 import 'settings_screen.dart';
 
-enum _QuickFilter { todos, porVencer, vencidos }
+enum _QuickFilter { todos, activos, porVencer, vencidos }
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -58,6 +60,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final clients = await DBHelper.instance.getClientSummaries();
     final totals = await DBHelper.instance.getTodayTotals();
     if (!mounted) return;
+    // Ordenados por vencimiento: primero lo más vencido/próximo a vencer;
+    // quien nunca tuvo un plan queda al final.
+    clients.sort((a, b) {
+      final endA = a.latestSubscription?.endDate;
+      final endB = b.latestSubscription?.endDate;
+      if (endA == null && endB == null) return 0;
+      if (endA == null) return 1;
+      if (endB == null) return -1;
+      return endA.compareTo(endB);
+    });
     setState(() {
       _allClients = clients;
       _todayTotals = totals;
@@ -68,7 +80,9 @@ class _HomeScreenState extends State<HomeScreen> {
   List<ClientSummary> get _visibleClients {
     var list = _allClients;
 
-    if (_filter == _QuickFilter.porVencer) {
+    if (_filter == _QuickFilter.activos) {
+      list = list.where((c) => c.status == ClientStatus.activo).toList();
+    } else if (_filter == _QuickFilter.porVencer) {
       list = list.where((c) => c.status == ClientStatus.porVencer).toList();
     } else if (_filter == _QuickFilter.vencidos) {
       list = list.where((c) => c.status == ClientStatus.vencido).toList();
@@ -89,7 +103,8 @@ class _HomeScreenState extends State<HomeScreen> {
       await _loadData();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Renovación registrada para ${summary.client.name}')),
+        SnackBar(
+            content: Text('Renovación registrada para ${summary.client.name}')),
       );
     }
   }
@@ -119,14 +134,25 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _onOpenDetail(ClientSummary summary) async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => ClientDetailScreen(client: summary.client),
+      ),
+    );
+    if (result == true) {
+      await _loadData();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final activos = _allClients
-        .where((c) => c.status == ClientStatus.activo)
-        .length;
-    final vencidos = _allClients
-        .where((c) => c.status == ClientStatus.vencido)
-        .length;
+    final activos =
+        _allClients.where((c) => c.status == ClientStatus.activo).length;
+    final porVencer =
+        _allClients.where((c) => c.status == ClientStatus.porVencer).length;
+    final vencidos =
+        _allClients.where((c) => c.status == ClientStatus.vencido).length;
     final visible = _visibleClients;
 
     return Scaffold(
@@ -152,6 +178,21 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.receipt_long_outlined),
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.card,
+              shape: const CircleBorder(),
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const PaymentsHistoryScreen(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
           Padding(
             padding: const EdgeInsets.only(right: 4),
             child: IconButton(
@@ -184,8 +225,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             _todayTotals[PaymentMethod.efectivo.label] ?? 0,
                         totalTransferencia:
                             _todayTotals[PaymentMethod.transferencia.label] ??
-                            0,
+                                0,
                         activos: activos,
+                        porVencer: porVencer,
                         vencidos: vencidos,
                       ),
                     ),
@@ -236,6 +278,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(width: 6),
                             _FilterChip(
+                              label: 'Activos',
+                              selected: _filter == _QuickFilter.activos,
+                              onTap: () => setState(
+                                () => _filter = _QuickFilter.activos,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            _FilterChip(
                               label: 'Por vencer',
                               selected: _filter == _QuickFilter.porVencer,
                               onTap: () => setState(
@@ -259,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
                     sliver: SliverToBoxAdapter(
                       child: Text(
-                        'Clientes',
+                        '${visible.length} ${visible.length == 1 ? 'cliente' : 'clientes'} · ordenados por vencimiento',
                         style: TextStyle(
                           color: AppColors.textSecondary.withValues(alpha: 0.8),
                           fontSize: 12,
@@ -285,6 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           final summary = visible[index];
                           return ClientCard(
                             summary: summary,
+                            onTap: () => _onOpenDetail(summary),
                             onRenovar: () => _onRenovar(summary),
                             onWhatsApp: () => _onWhatsApp(summary),
                           );

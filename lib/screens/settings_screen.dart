@@ -18,9 +18,9 @@ class _PlanControllers {
   final TextEditingController duration;
 
   _PlanControllers(GymPlan plan)
-    : name = TextEditingController(text: plan.name),
-      price = TextEditingController(text: plan.price.toStringAsFixed(2)),
-      duration = TextEditingController(text: plan.durationDays.toString());
+      : name = TextEditingController(text: plan.name),
+        price = TextEditingController(text: plan.price.toStringAsFixed(2)),
+        duration = TextEditingController(text: plan.durationDays.toString());
 
   void dispose() {
     name.dispose();
@@ -71,7 +71,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final price = double.tryParse(controllers.price.text.replaceAll(',', '.'));
     final duration = int.tryParse(controllers.duration.text);
 
-    if (name.isEmpty || price == null || price < 0 || duration == null || duration < 1) {
+    if (name.isEmpty ||
+        price == null ||
+        price < 0 ||
+        duration == null ||
+        duration < 1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Revisa nombre, precio y duración')),
       );

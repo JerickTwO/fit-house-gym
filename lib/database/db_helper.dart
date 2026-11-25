@@ -4,6 +4,7 @@ import 'package:sqflite/sqflite.dart';
 import '../models/client.dart';
 import '../models/client_summary.dart';
 import '../models/gym_plan.dart';
+import '../models/payment_record.dart';
 import '../models/subscription.dart';
 
 /// Acceso único (singleton) a la base de datos SQLite local.
@@ -275,5 +276,43 @@ class DBHelper {
   Future<List<Map<String, Object?>>> getAllSubscriptionsRaw() async {
     final db = await database;
     return db.query('subscriptions', orderBy: 'id ASC');
+  }
+
+  /// Pagos (suscripciones cobradas) con el nombre del cliente ya resuelto,
+  /// para el historial general o el de un cliente puntual. `since` filtra
+  /// por fecha de cobro (`created_at >= since`); `clientId` y
+  /// `paymentMethod` son filtros exactos opcionales.
+  Future<List<PaymentRecord>> getPayments({
+    int? clientId,
+    String? paymentMethod,
+    DateTime? since,
+  }) async {
+    final db = await database;
+    final where = <String>[];
+    final args = <Object?>[];
+
+    if (clientId != null) {
+      where.add('s.client_id = ?');
+      args.add(clientId);
+    }
+    if (paymentMethod != null) {
+      where.add('s.payment_method = ?');
+      args.add(paymentMethod);
+    }
+    if (since != null) {
+      where.add('s.created_at >= ?');
+      args.add(since.toIso8601String());
+    }
+    final whereClause = where.isEmpty ? '' : 'WHERE ${where.join(' AND ')}';
+
+    final rows = await db.rawQuery('''
+      SELECT s.*, c.name AS client_name
+      FROM subscriptions s
+      JOIN clients c ON c.id = s.client_id
+      $whereClause
+      ORDER BY s.created_at DESC
+    ''', args);
+
+    return rows.map(PaymentRecord.fromMap).toList();
   }
 }

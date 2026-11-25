@@ -99,7 +99,8 @@ class _ReceiptPickerState extends State<ReceiptPicker> {
           ),
           TextButton(
             onPressed: _remove,
-            child: const Text('Quitar', style: TextStyle(color: AppColors.vencido)),
+            child: const Text('Quitar',
+                style: TextStyle(color: AppColors.vencido)),
           ),
         ],
       );
